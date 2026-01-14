@@ -1,0 +1,41 @@
+name: Build QMK Vial Firmware
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      keyboard:
+        description: 'Keyboard (e.g., crkbd/rev1)'
+        default: 'crkbd/rev1'
+        required: true
+      keymap:
+        description: 'Keymap'
+        default: 'vial'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout vial-qmk
+        uses: actions/checkout@v4
+        with:
+          repository: vial-kb/vial-qmk
+          ref: vial
+          submodules: recursive
+
+      - name: Set up QMK
+        uses: qmk/qmk_setup_action@v1
+
+      - name: Build firmware
+        run: |
+          qmk compile -kb ${{ github.event.inputs.keyboard }} \
+                      -km ${{ github.event.inputs.keymap }} \
+                      -e CONVERT_TO=promicro_rp2040
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: chocofi-vial-firmware
+          path: .build/*.uf2
+          retention-days: 30
